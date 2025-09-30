@@ -16,7 +16,7 @@ El servicio está diseñado con una arquitectura de tres niveles para optimizar 
 
 Al iniciar, la aplicación borra la base de datos local y la carga con el contenido actualizado de la API REST. Además, un proceso en segundo plano resincroniza la base de datos cada 30 segundos para mantener la consistencia de los datos.
 
-![Diagrama de la arquitectura](../images/remote_repository.jpg)
+![Diagrama de la arquitectura](/images/remote_repository.jpg)
 
 
 ## Funcionalidades
