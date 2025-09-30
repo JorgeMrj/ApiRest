@@ -1,65 +1,59 @@
-# Practica: Servicio con almacenamiento local y remoto
+# Servicio API REST con Almacenamiento Local y Remoto
 
-Este proyecto implementa un servicio web en Java que gestiona datos de usuarios, utilizando una arquitectura de tres niveles que combina una caché en memoria, una base de datos embebida y una API REST externa.
-
-## Objetivo
-
-El objetivo principal es desarrollar un servicio web robusto y eficiente que permita realizar operaciones CRUD (Crear, Leer, Actualizar, Eliminar) sobre datos de usuarios, manejando la comunicación con un almacenamiento local (base de datos embebida) y uno remoto (API REST) de forma segura y optimizada.
+Este proyecto presenta un servicio web desarrollado en Java para la gestión de datos de usuarios. Implementa una arquitectura de tres niveles que integra una caché en memoria, una base de datos embebida y una API REST remota para garantizar un acceso a los datos eficiente, robusto y de alto rendimiento.
 
 ## Arquitectura
 
-El servicio está diseñado con una arquitectura de tres niveles para optimizar el acceso a los datos y mejorar el rendimiento:
+El diseño del servicio se basa en una arquitectura de tres niveles para optimizar la latencia y la disponibilidad de los datos:
 
-1.  **Caché en Memoria:** Proporciona acceso ultrarrápido a los datos solicitados con frecuencia.
-2.  **Base de Datos Embebida:** Almacenamiento local (H2) que actúa como una fuente de datos persistente y sincronizada.
-3.  **API REST Remota:** Fuente principal de datos (JSONPlaceholder), consultada cuando la información no está disponible localmente.
+1.  **Caché en Memoria:** Ofrece acceso de alta velocidad a los datos consultados con mayor frecuencia, actuando como la primera capa de lectura.
+2.  **Base de Datos Embebida (H2):** Funciona como un almacenamiento local persistente. Se sincroniza periódicamente con la fuente de datos remota para mantener la consistencia.
+3.  **API REST Remota ([JSONPlaceholder](https://jsonplaceholder.typicode.com/)):** Es la fuente principal y autoritativa de los datos. Se consulta únicamente cuando la información no se encuentra en la caché ni en la base de datos local.
 
-Al iniciar, la aplicación borra la base de datos local y la carga con el contenido actualizado de la API REST. Además, un proceso en segundo plano resincroniza la base de datos cada 30 segundos para mantener la consistencia de los datos.
+Al iniciar, la aplicación purga la base de datos local y la recarga con los datos actualizados desde la API REST. Adicionalmente, un proceso en segundo plano resincroniza la base de datos cada 30 segundos para reflejar cualquier cambio externo.
 
 ![Diagrama de la arquitectura](/images/remote_repository.jpg)
 
+## Funcionalidades Principales
 
-## Funcionalidades
+El servicio expone una API con las siguientes capacidades:
 
-El servicio ofrece las siguientes operaciones:
-
--   **Obtener todos los usuarios:** Devuelve los datos desde la base de datos local.
--   **Obtener un usuario por su ID:** Busca en la caché, luego en la base de datos y finalmente en la API REST.
--   **Crear un nuevo usuario:** Envía la petición a la API REST y sincroniza el nuevo registro en la base de datos local y la caché.
--   **Actualizar un usuario existente:** Actualiza el registro en la API REST, la base de datos y la caché.
--   **Eliminar un usuario:** Elimina el registro de la API REST, la base de datos y la caché.
--   **Exportar usuarios a JSON:** Genera un fichero `JSON` con todos los usuarios del sistema.
--   **Notificaciones:** Avisa sobre operaciones CUD y refrescos de la base de datos.
--   **Logging:** Registra todas las operaciones y errores ocurridos en los últimos 7 días.
+-   **Listar Usuarios (`GET /users`):** Devuelve el conjunto completo de usuarios desde la base de datos local.
+-   **Obtener Usuario por ID (`GET /users/{id}`):** Realiza una búsqueda secuencial: primero en la caché, luego en la base de datos y, finalmente, en la API REST remota.
+-   **Crear Usuario (`POST /users`):** La operación se delega a la API REST remota. Tras la confirmación, el nuevo registro se sincroniza en la base de datos local y en la caché.
+-   **Actualizar Usuario (`PUT /users/{id}`):** Actualiza el registro en la API REST, y propaga el cambio a la base de datos y la caché para mantener la consistencia.
+-   **Eliminar Usuario (`DELETE /users/{id}`):** Elimina el registro en la API REST, la base de datos local y la caché.
+-   **Exportación de Datos:** Genera un fichero `JSON` con todos los usuarios del sistema.
+-   **Sistema de Notificaciones:** Emite alertas sobre operaciones de creación, actualización, eliminación y durante los ciclos de refresco de la base de datos.
+-   **Registro de Actividad (Logging):** Almacena un registro detallado de todas las operaciones y errores, con una retención de los últimos 7 días.
 
 ## Modelo de Datos
 
-Para simplificar el modelo, solo se gestionan los siguientes campos del recurso `users` de la API:
+Para simplificar la implementación, el servicio opera con un subconjunto de los campos del recurso `users` de la API remota:
 
--   `id`: Identificador único.
+-   `id`: Identificador único del usuario.
 -   `name`: Nombre completo.
 -   `username`: Nombre de usuario.
 -   `email`: Dirección de correo electrónico.
 
-A nivel de base de datos, la entidad `UserEntity` incluye además los campos `createdAt` y `updatedAt` para el control de versiones.
+A nivel de persistencia, la entidad `UserEntity` extiende este modelo añadiendo los campos `createdAt` y `updatedAt` para el control de versiones y auditoría.
 
 ## Flujo de Operaciones
 
--   **Inicio:** La base de datos se limpia y se carga desde la API REST.
--   **Sincronización:** Cada 30 segundos, la base de datos y la caché se actualizan desde la API REST.
--   **Lectura (GET /users/{id}):** El flujo de búsqueda es `Caché -> Base de Datos -> API REST`. El dato encontrado se propaga a los niveles superiores (Caché y BD).
--   **Creación (POST /users):** `API REST -> Base de Datos -> Caché`.
--   **Actualización (PUT /users/{id}):** `API REST -> Base de Datos -> Caché`.
--   **Eliminación (DELETE /users/{id}):** `API REST -> Base de Datos -> Caché`.
+El flujo de datos a través de las capas de la arquitectura varía según la operación:
 
-## Requisitos Técnicos
+-   **Inicio del Servicio:** Se limpia la base de datos local y se realiza una carga masiva inicial desde la API REST.
+-   **Sincronización Periódica:** Cada 30 segundos, el sistema consulta la API REST para actualizar la base de datos y la caché.
+-   **Lectura (`GET /users/{id}`):** El flujo de búsqueda sigue la ruta: `Caché -> Base de Datos -> API REST`. Si el dato se encuentra, se propaga hacia las capas superiores para optimizar futuras lecturas.
+-   **Escritura (`POST`, `PUT`, `DELETE`):** Las operaciones de modificación siguen la ruta: `API REST -> Base de Datos -> Caché` para garantizar que la fuente autoritativa se actualice primero.
+
+## Stack Tecnológico
 
 -   **Lenguaje:** Java.
--   **Programación:** Asíncrona y Reactiva para máxima eficiencia.
--   **Almacenamiento Local:** Base de datos embebida (H2, SQLite, etc.).
--   **Almacenamiento Remoto:** Integración con una API REST (ej. [JSONPlaceholder](https://jsonplaceholder.typicode.com/)).
--   **Modelo:** DTOs para las peticiones/respuestas de la API, Entidades para la base de datos y un modelo de dominio claro.
--   **Manejo de Errores:** Sistema de errores de dominio bien definidos.
--   **Testing:** Pruebas unitarias y de integración para las capas de servicio y repositorios.
--   **Documentación:** Código y diseño debidamente documentados.
+-   **Framework:** (Especificar, ej. Spring Boot, Quarkus).
+-   **Programación:** Asíncrona y Reactiva (ej. Project Reactor/RxJava).
+-   **Almacenamiento Local:** Base de datos embebida H2.
+-   **Cliente HTTP:** Para la integración con la API REST remota.
+-   **Modelo de Datos:** DTOs para la capa de API, Entidades para la persistencia y un modelo de dominio desacoplado.
+-   **Testing:** Pruebas unitarias y de integración (ej. JUnit, Mockito).
 -   **Control de Versiones:** Git y GitHub.
