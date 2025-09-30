@@ -50,10 +50,9 @@ El flujo de datos a través de las capas de la arquitectura varía según la ope
 ## Stack Tecnológico
 
 -   **Lenguaje:** Java.
--   **Framework:** (Especificar, ej. Spring Boot, Quarkus).
--   **Programación:** Asíncrona y Reactiva (ej. Project Reactor/RxJava).
+-   **Programación:** Asíncrona y Reactiva (RxJava).
 -   **Almacenamiento Local:** Base de datos embebida H2.
 -   **Cliente HTTP:** Para la integración con la API REST remota.
 -   **Modelo de Datos:** DTOs para la capa de API, Entidades para la persistencia y un modelo de dominio desacoplado.
--   **Testing:** Pruebas unitarias y de integración (ej. JUnit, Mockito).
+-   **Testing:** Pruebas unitarias y de integración (JUnit, Mockito).
 -   **Control de Versiones:** Git y GitHub.
