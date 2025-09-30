@@ -11,13 +11,13 @@ El objetivo principal es desarrollar un servicio web robusto y eficiente que per
 El servicio está diseñado con una arquitectura de tres niveles para optimizar el acceso a los datos y mejorar el rendimiento:
 
 1.  **Caché en Memoria:** Proporciona acceso ultrarrápido a los datos solicitados con frecuencia.
-2.  **Base de Datos Embebida:** Almacenamiento local (H2, SQLite) que actúa como una fuente de datos persistente y sincronizada.
+2.  **Base de Datos Embebida:** Almacenamiento local (H2) que actúa como una fuente de datos persistente y sincronizada.
 3.  **API REST Remota:** Fuente principal de datos (JSONPlaceholder), consultada cuando la información no está disponible localmente.
 
 Al iniciar, la aplicación borra la base de datos local y la carga con el contenido actualizado de la API REST. Además, un proceso en segundo plano resincroniza la base de datos cada 30 segundos para mantener la consistencia de los datos.
 
 ![Diagrama de la arquitectura](../images/remote_repository.jpg)
-*Nota: Asegúrate de que la ruta a la imagen sea correcta en tu repositorio.*
+
 
 ## Funcionalidades
 
