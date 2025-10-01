@@ -10,61 +10,72 @@ import java.util.List;
 import java.util.Optional;
 
 public class UserRepositoryImpl implements UserRepository {
+    private final UserDao userDao;
 
-        private final UserDao userDao = JdbiManager.getInstance().getUserDao();
-
-        @Override
-        public List<User> getAll() {
-            return userDao.getAll().stream()
-                    .map(Mapper::entityToUser)
-                    .toList();
-        }
+    public TenistasRepositoryImpl(TenistasDao tenistasDao) {
+        this.tenistasDao = tenistasDao;
+    }
 
 
-        @Override
-        public Optional<User> getById(Long id) {
-
-            return userDao.getById(id)
-                    .map(Mapper::entityToUser);
-        }
-
-
-        @Override
-        public Optional<User> save(User user) {
-            UserEntity userEntity = Mapper.userToEntity(user);
-
-            if (userDao.save(userEntity) == 1) {
-                return Optional.of(user);
-            } else {
-                return Optional.empty();
-            }
-        }
+    @Override
+    public List<Tenista> findAll() {
+        return tenistasDao.findAll().stream()
+                .map(TenistaMapper::fromEntity)
+                .toList();
+    }
 
 
-        @Override
-        public Optional<User> update(User user) {
+    @Override
+    public Optional<Tenista> findById(long id) {
+        logger.info("Buscando tenista con id: {}", id);
+        return tenistasDao.findById(id).map(TenistaMapper::fromEntity);
+    }
 
-            Optional<UserEntity> userToUpdate = userDao.getById(user.getId());
 
-            if (userToUpdate.isPresent() && userDao.update(Mapper.userToEntity(user)) == 1) {
-                return Optional.of(user);
-            } else  {
-                return Optional.empty();
-            }
-        }
+    @Override
+    public Tenista save(Tenista tenista) {
+        // Convertimos a entidad con id = -1
+        TenistaEntity entityToSave = TenistaMapper.toEntity(
+                Tenista.builder()
+                        //.id(Tenista.NEW_TENISTA_ID) // lo toma por defecto!!
+                        .nombre(tenista.getNombre())
+                        .pais(tenista.getPais())
+                        .altura(tenista.getAltura())
+                        .peso(tenista.getPeso())
+                        .puntos(tenista.getPuntos())
+                        .mano(tenista.getMano())
+                        .fechaNacimiento(tenista.getFechaNacimiento())
+                        .build()
+        );
 
-        @Override
-        public Optional<User> deleteById(Long id) {
 
-            Optional<UserEntity> userToDelete = userDao.getById(id);
+        long newId = tenistasDao.save(entityToSave);
 
-            if (userToDelete.isPresent() && userDao.deleteById(id) == 1) {
-                User deletedUser = Mapper.entityToUser(userToDelete.get());
-                return Optional.of(deletedUser);
-            } else {
-                return Optional.empty();
-            }
+        return Tenista.builder()
+                .id(newId)
+                .nombre(tenista.getNombre())
+                .pais(tenista.getPais())
+                .altura(tenista.getAltura())
+                .peso(tenista.getPeso())
+                .puntos(tenista.getPuntos())
+                .mano(tenista.getMano())
+                .fechaNacimiento(tenista.getFechaNacimiento())
+                .build();
+    }
 
-        }
+    /** {@inheritDoc} */
+    @Override
+    public Optional<User> update(User tenista) {
+        TenistaEntity entityToUpdate = Mapper.toEntity(user);
+        int updatedRows = tenistasDao.update(entityToUpdate);
+        return updatedRows > 0 ? Optional.of(tenista) : Optional.empty();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean deleteById(long id) {
+        logger.info("Borrando tenista con id: {}", id);
+        return tenistasDao.delete(id) > 0;
+    }
     }
 
