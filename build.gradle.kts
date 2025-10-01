@@ -28,6 +28,8 @@ dependencies {
 
     //retroFit
     implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    implementation("com.squareup.retrofit2:converter-jackson:2.12.0") // Jackson con Retrofit
+    implementation("com.squareup.retrofit2:adapter-rxjava3:2.12.0") // RxJava3 con Retrofit
 
     // JDBI para la base de datos
     implementation("org.jdbi:jdbi3-core:3.49.5") // Core
